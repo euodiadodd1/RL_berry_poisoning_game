@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Multi-Agent Gridworld Environment (MultiGrid)
 
 
@@ -79,3 +80,6 @@ Each agent get a positive reward whenever one agent drop the ball in their goal 
 Each agent get a positive reward whenever one agent collect a ball of the same color and a negative reward whenever one agent collect a ball of a different color. The number of balls, colors and players can be easily modified.
 
 
+=======
+# RL_berry_poisoning_game
+>>>>>>> 28394dc1b51bd06381fe1dfd641b1f36d0a8f818
