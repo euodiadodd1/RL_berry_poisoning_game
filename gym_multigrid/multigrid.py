@@ -43,19 +43,18 @@ class World:
 
     # Map of object type to integers
     OBJECT_TO_IDX = {
-        'unseen': 0,
-        'empty': 1,
-        'wall': 2,
-        'floor': 3,
-        'door': 4,
-        'key': 5,
-        'ball': 6,
-        'box': 7,
-        'goal': 8,
-        'lava': 9,
-        'agent': 10,
-        'objgoal': 11,
-        'switch': 12
+        'unseen'        : 0,
+        'empty'         : 1,
+        'wall'          : 2,
+        'floor'         : 3,
+        'door'          : 4,
+        'key'           : 5,
+        'ball'          : 6,
+        'box'           : 7,
+        'goal'          : 8,
+        'poison_berry'  : 9,
+        'safe_berry'    : 10,
+        'agent'         : 11,
     }
     IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
 
@@ -357,7 +356,30 @@ class Ball(WorldObj):
     def render(self, img):
         fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.color])
 
+class Safe_Berry(WorldObj):
+    def __init__(self, world, index=1, reward=1):
+        super(Safe_Berry, self).__init__(world, 'safe_berry', world.IDX_TO_COLOR[index])
+        self.index = index
+        self.reward = reward
 
+    def can_pickup(self):
+        return True
+
+    def render(self, img):
+        fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.color])
+
+class Poison_Berry(WorldObj):
+    def __init__(self, world, index=0, reward=-1):
+        super(Poison_Berry, self).__init__(world, 'poison_berry', world.IDX_TO_COLOR[index])
+        self.index = index
+        self.reward = reward
+
+    def can_pickup(self):
+        return True
+
+    def render(self, img):
+        fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.color])
+        
 class Box(WorldObj):
     def __init__(self, world, color, contains=None):
         super(Box, self).__init__(world, 'box', color)
@@ -393,6 +415,10 @@ class Agent(WorldObj):
         self.terminated = False
         self.started = True
         self.paused = False
+        self.is_marked = False
+        self.marked_other = False
+        self.marked_step = 0
+        self.agent_reward = 0
 
     def render(self, img):
         c = COLORS[self.color]
@@ -969,6 +995,8 @@ class MultiGridEnv(gym.Env):
 
         # Step count since episode start
         self.step_count = 0
+        self.agent_marked = False
+        # Step count since episode start
 
         # Return first observation
         if self.partial_obs:
@@ -1071,7 +1099,8 @@ class MultiGridEnv(gym.Env):
         Compute the reward to be given upon success
         """
 
-        return 1 - 0.9 * (self.step_count / self.max_steps)
+        return 1 - 0.5 * (self.step_count / self.max_steps)
+        
 
     def _rand_int(self, low, high):
         """
@@ -1262,6 +1291,10 @@ class MultiGridEnv(gym.Env):
             # Get the contents of the cell in front of the agent
             fwd_cell = self.grid.get(*fwd_pos)
 
+            if self.agents[i].is_marked and self.step_count == self.agents[i].marked_step + 2 and self.step_count > 0:
+                self._reward(i, rewards, -1)
+                self.agents[i].is_marked = False
+
             # Rotate left
             if actions[i] == self.actions.left:
                 self.agents[i].dir -= 1
@@ -1275,10 +1308,7 @@ class MultiGridEnv(gym.Env):
             # Move forward
             elif actions[i] == self.actions.forward:
                 if fwd_cell is not None:
-                    if fwd_cell.type == 'goal':
-                        done = True
-                        self._reward(i, rewards, 1)
-                    elif fwd_cell.type == 'switch':
+                    if fwd_cell.type == 'switch':
                         self._handle_switch(i, rewards, fwd_pos, fwd_cell)
                 elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
@@ -1319,7 +1349,7 @@ class MultiGridEnv(gym.Env):
 
         obs=[self.objects.normalize_obs*ob for ob in obs]
 
-        return obs, rewards, done, {}
+        return obs, rewards, done, {}, self.step_count
 
     def gen_obs_grid(self):
         """

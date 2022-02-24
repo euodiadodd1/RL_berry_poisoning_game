@@ -4,7 +4,7 @@ from gym.envs.registration import register
 import argparse
 
 parser = argparse.ArgumentParser(description=None)
-parser.add_argument('-e', '--env', default='soccer', type=str)
+parser.add_argument('-e', '--env', default='collect', type=str)
 
 args = parser.parse_args()
 

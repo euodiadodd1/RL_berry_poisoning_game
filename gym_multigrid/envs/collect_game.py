@@ -22,6 +22,7 @@ class CollectGameEnv(MultiGridEnv):
         self.balls_index = balls_index
         self.balls_reward = balls_reward
         self.zero_sum = zero_sum
+        self.running_reward = 0
 
         self.world = World
 
@@ -53,7 +54,12 @@ class CollectGameEnv(MultiGridEnv):
 
         for number, index, reward in zip(self.num_balls, self.balls_index, self.balls_reward):
             for i in range(number):
-                self.place_obj(Ball(self.world, index, reward))
+                self.place_obj(Safe_Berry(self.world, index, reward))
+        
+        
+        for i in range(number):
+            self.place_obj(Poison_Berry(self.world, 0, -1))
+
 
         # Randomize the player start position and orientation
         for a in self.agents:
@@ -65,34 +71,53 @@ class CollectGameEnv(MultiGridEnv):
         Compute the reward to be given upon success
         """
         for j,a in enumerate(self.agents):
-            if a.index==i or a.index==0:
+            #print(j, a.index)
+            if a.index==i:
+                #print("matched agent")
                 rewards[j]+=reward
             if self.zero_sum:
                 if a.index!=i or a.index==0:
                     rewards[j] -= reward
+        #print("rewarded",rewards)
 
     def _handle_pickup(self, i, rewards, fwd_pos, fwd_cell):
         if fwd_cell:
             if fwd_cell.can_pickup():
                 if fwd_cell.index in [0, self.agents[i].index]:
+                    print("agent ", i, " PICKED A:", fwd_cell.type, fwd_cell.reward)
+                    if fwd_cell.type == 'safe_berry':
+                        #self.grid.set(*fwd_pos, None)
+                        #done = True
+                        # reward += self._reward()
+                        self._reward(i, rewards, fwd_cell.reward)
+                    elif fwd_cell.type == 'poison_berry':
+                        #self.grid.set(*fwd_pos, None)
+                        #done = True
+                        # reward += self._reward()
+                        self.agents[i].is_marked = True
+                        self.agents[i].marked_step = self.step_count
+                    #self._reward(i, rewards, fwd_cell.reward)
                     fwd_cell.cur_pos = np.array([-1, -1])
                     self.grid.set(*fwd_pos, None)
-                    self._reward(i, rewards, fwd_cell.reward)
 
     def _handle_drop(self, i, rewards, fwd_pos, fwd_cell):
         pass
 
     def step(self, actions):
-        obs, rewards, done, info = MultiGridEnv.step(self, actions)
+        
+        obs, rewards, done, info, step_count = MultiGridEnv.step(self, actions)
+        # print(rewards)
+        self.running_reward += rewards.sum()
+        print('step=%s, reward=%.2f' % (step_count, self.running_reward))
         return obs, rewards, done, info
 
 
 class CollectGame4HEnv10x10N2(CollectGameEnv):
     def __init__(self):
         super().__init__(size=10,
-        num_balls=[5],
-        agents_index = [1,2,3],
-        balls_index=[0],
+        num_balls=[10],
+        agents_index = [0,1,2],
+        balls_index=[1],
         balls_reward=[1],
-        zero_sum=True)
+        zero_sum=False)
 
