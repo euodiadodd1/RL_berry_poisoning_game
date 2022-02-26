@@ -1107,7 +1107,7 @@ class MultiGridEnv(gym.Env):
         Generate random integer in [low,high[
         """
 
-        return self.np_random.randint(low, high)
+        return self.np_random.integers(low, high)
 
     def _rand_float(self, low, high):
         """
@@ -1274,7 +1274,8 @@ class MultiGridEnv(gym.Env):
 
     def step(self, actions):
         self.step_count += 1
-
+        
+        actions = [actions]
         order = np.random.permutation(len(actions))
 
         rewards = np.zeros(len(actions))

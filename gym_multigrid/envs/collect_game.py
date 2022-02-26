@@ -15,7 +15,7 @@ class CollectGameEnv(MultiGridEnv):
         balls_index=[],
         balls_reward=[],
         zero_sum = False,
-        view_size=7
+        view_size=10
 
     ):
         self.num_balls = num_balls
@@ -54,11 +54,11 @@ class CollectGameEnv(MultiGridEnv):
 
         for number, index, reward in zip(self.num_balls, self.balls_index, self.balls_reward):
             for i in range(number):
-                self.place_obj(Safe_Berry(self.world, index, reward))
+                self.place_obj(Safe_Berry(self.world, index, 100))
         
         
-        for i in range(number):
-            self.place_obj(Poison_Berry(self.world, 0, -1))
+        for i in range(50):
+            self.place_obj(Poison_Berry(self.world, 0, -100))
 
 
         # Randomize the player start position and orientation
@@ -66,7 +66,7 @@ class CollectGameEnv(MultiGridEnv):
             self.place_agent(a)
 
 
-    def _reward(self, i, rewards, reward=1):
+    def _reward(self, i, rewards, reward):
         """
         Compute the reward to be given upon success
         """
@@ -90,6 +90,7 @@ class CollectGameEnv(MultiGridEnv):
                         #done = True
                         # reward += self._reward()
                         self._reward(i, rewards, fwd_cell.reward)
+                        print(fwd_cell.reward)
                     elif fwd_cell.type == 'poison_berry':
                         #self.grid.set(*fwd_pos, None)
                         #done = True
@@ -115,8 +116,8 @@ class CollectGameEnv(MultiGridEnv):
 class CollectGame4HEnv10x10N2(CollectGameEnv):
     def __init__(self):
         super().__init__(size=10,
-        num_balls=[10],
-        agents_index = [0,1,2],
+        num_balls=[2],
+        agents_index = [0],
         balls_index=[1],
         balls_reward=[1],
         zero_sum=False)
