@@ -369,7 +369,7 @@ class Safe_Berry(WorldObj):
         fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.color])
 
 class Poison_Berry(WorldObj):
-    def __init__(self, world, index=0, reward=-1):
+    def __init__(self, world, index=0, reward=-100):
         super(Poison_Berry, self).__init__(world, 'poison_berry', world.IDX_TO_COLOR[index])
         self.index = index
         self.reward = reward
@@ -1293,7 +1293,7 @@ class MultiGridEnv(gym.Env):
             fwd_cell = self.grid.get(*fwd_pos)
 
             if self.agents[i].is_marked and self.step_count == self.agents[i].marked_step + 2 and self.step_count > 0:
-                self._reward(i, rewards, -1)
+                self._reward(i, rewards, -10)
                 self.agents[i].is_marked = False
 
             # Rotate left

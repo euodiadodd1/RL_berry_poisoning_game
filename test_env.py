@@ -32,13 +32,13 @@ def main():
     while True:
         env.render(mode='human', highlight=True)
         time.sleep(0.1)
-        print(env.action_space.sample())
+        #print(env.action_space.sample())
 
         ac = env.action_space.sample()
-        print(ac)
+        #print(ac)
 
         obs, _, done, _ = env.step(ac)
-        print(np.asarray(obs).shape)
+        #print(np.asarray(obs).shape)
 
         if done:
             break
