@@ -61,7 +61,7 @@ class CollectGameEnv(MultiGridEnv):
                 
         
         for i in range(number):
-            self.place_obj(Poison_Berry(self.world, 0, -100))
+            self.place_obj(Poison_Berry(self.world, 0, -10))
 
 
         # Randomize the player start position and orientation
@@ -87,7 +87,7 @@ class CollectGameEnv(MultiGridEnv):
         #print("rewarded",rewards)
 
     def _handle_pickup(self, i, rewards, fwd_pos, fwd_cell):
-        ball_positions = np.zeros(shape=(self.num_balls,2))
+        #ball_positions = np.zeros(shape=(self.num_balls[0],2))
         if fwd_cell:
             if fwd_cell.can_pickup():
                 #if fwd_cell.index in [0, self.agents[i].index]:
@@ -97,49 +97,50 @@ class CollectGameEnv(MultiGridEnv):
                     #done = True
                     # reward += self._reward()
                     self._reward(i, rewards, fwd_cell.reward)
-                    ball_positions[i] = fwd_pos
+                    self.ball_positions[i] = fwd_pos
                     #print(fwd_cell.reward)
                 elif fwd_cell.type == 'poison_berry':
                     #self.grid.set(*fwd_pos, None)
                     #done = True
                     # reward += self._reward()
-                    self.agents[i].is_marked = True
-                    self.agents[i].marked_step = self.step_count
+                    self._reward(i, rewards, fwd_cell.reward)
+                    self.ball_positions[i] = fwd_pos
                 #self._reward(i, rewards, fwd_cell.reward)
                 fwd_cell.cur_pos = np.array([-1, -1])
+                self.regen_berries(0.8, fwd_cell)
                 self.grid.set(*fwd_pos, None)
-        self.ball_positions = ball_positions
+        #self.ball_positions = ball_positions
 
     def _handle_drop(self, i, rewards, fwd_pos, fwd_cell):
         pass
 
-    def regen_berries(self, probability):
+    def regen_berries(self, probability, prev_cell):
 
         for number, index, reward in zip(self.num_balls, self.balls_index, self.balls_reward):
             for i in range(number):
                 #print("pos", self.ball_positions[i])
-                if self.ball_positions[i] != 0 and random.random() < probability:
-                    cell = self.grid.get(*self.ball_positions[i].astype(int))
-                    print("cell", cell)
-                    self.place_obj(Safe_Berry(self.world, index, reward))
-                        #self.place_obj(Poison_Berry(self.world, 0, -100))
+                if (self.ball_positions[i] != [0,0]).all() and random.random() < probability:
+                    self.place_obj(prev_cell)
+                    self.ball_positions[i] = 0
+                        # self.place_obj(Poison_Berry(self.world, 0, -100))
             
 
 
     def step(self, actions):
-        self.regen_berries(0.2)
+        
         obs, rewards, done, info, step_count = MultiGridEnv.step(self, actions)
         # print(rewards)
         self.running_reward += rewards.sum()
         print('step=%s, reward=%.2f' % (step_count, self.running_reward))
-        return obs, rewards, done, info
+        print("ops", np.asarray(obs).shape)
+        return obs, self.running_reward, done, info
 
 
 class CollectGame4HEnv10x10N2(CollectGameEnv):
     def __init__(self):
         super().__init__(size=10,
         num_balls=[10],
-        agents_index = [0],
+        agents_index = [0,1],
         balls_index=[1],
         balls_reward=[10],
         zero_sum=False)

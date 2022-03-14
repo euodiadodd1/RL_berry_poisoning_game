@@ -369,7 +369,7 @@ class Safe_Berry(WorldObj):
         fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.color])
 
 class Poison_Berry(WorldObj):
-    def __init__(self, world, index=0, reward=-100):
+    def __init__(self, world, index=0, reward=-10):
         super(Poison_Berry, self).__init__(world, 'poison_berry', world.IDX_TO_COLOR[index])
         self.index = index
         self.reward = reward
@@ -405,7 +405,7 @@ class Box(WorldObj):
 
 
 class Agent(WorldObj):
-    def __init__(self, world, index=0, view_size=7):
+    def __init__(self, world, index=4, view_size=7):
         super(Agent, self).__init__(world, 'agent', world.IDX_TO_COLOR[index])
         self.pos = None
         self.dir = None
@@ -1276,13 +1276,15 @@ class MultiGridEnv(gym.Env):
         self.step_count += 1
         
         actions = [actions]
+        #print(actions)
         order = np.random.permutation(len(actions))
 
         rewards = np.zeros(len(actions))
         done = False
+        #print(order)
 
         for i in order:
-
+            #print(i)
             if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started or actions[i] == self.actions.still:
                 continue
 
@@ -1292,9 +1294,9 @@ class MultiGridEnv(gym.Env):
             # Get the contents of the cell in front of the agent
             fwd_cell = self.grid.get(*fwd_pos)
 
-            if self.agents[i].is_marked and self.step_count == self.agents[i].marked_step + 2 and self.step_count > 0:
-                self._reward(i, rewards, -10)
-                self.agents[i].is_marked = False
+            # if self.agents[i].is_marked and self.step_count == self.agents[i].marked_step + 1 and self.step_count > 0:
+            #     self._reward(i, rewards, -10)
+            #     self.agents[i].is_marked = False
 
             # Rotate left
             if actions[i] == self.actions.left:
@@ -1348,8 +1350,8 @@ class MultiGridEnv(gym.Env):
         else:
             obs = [self.grid.encode_for_agents(self.agents[i].pos) for i in range(len(actions))]
 
-        obs=[self.objects.normalize_obs*ob for ob in obs]
-
+        obs = [self.objects.normalize_obs*ob for ob in obs]
+        #print("len",np.asarray(obs).shape)
         return obs, rewards, done, {}, self.step_count
 
     def gen_obs_grid(self):

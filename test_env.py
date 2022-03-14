@@ -34,8 +34,9 @@ def main():
         time.sleep(0.1)
         #print(env.action_space.sample())
 
-        ac = env.action_space.sample()
-        #print(ac)
+        ac = [env.action_space.sample() for _ in range(nb_agents)]
+
+        print(ac)
 
         obs, _, done, _ = env.step(ac)
         #print(np.asarray(obs).shape)
